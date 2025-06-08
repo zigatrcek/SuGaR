@@ -89,6 +89,12 @@ if __name__ == "__main__":
     parser.add_argument('--gpu', type=int, default=0, help='Index of GPU device to use.')
     parser.add_argument('--white_background', type=str2bool, default=False, help='Use a white background instead of black.')
 
+    # Memory optimization parameters
+    parser.add_argument('--img_resolution', type=int, default=1,
+                        help='Factor by which to downscale images. 1=original, 2=half, 4=quarter, 8=eighth. Higher values save more memory.')
+    parser.add_argument('--img_size_limit', type=int, default=1920,
+                        help='Maximum image size. Images larger than this will be downscaled to save memory.')
+
     # Parse arguments
     args = parser.parse_args()
     if args.low_poly:
@@ -124,6 +130,8 @@ if __name__ == "__main__":
         'normal_factor': 0.2,
         'gpu': args.gpu,
         'white_background': args.white_background,
+        'img_resolution': args.img_resolution,
+        'img_size_limit': args.img_size_limit,
     })
     if args.regularization_type == 'sdf':
         coarse_sugar_path = coarse_training_with_sdf_regularization(coarse_args)
@@ -174,6 +182,8 @@ if __name__ == "__main__":
         'eval': args.eval,
         'gpu': args.gpu,
         'white_background': args.white_background,
+        'img_resolution': args.img_resolution,
+        'img_size_limit': args.img_size_limit,
     })
     refined_sugar_path = refined_training(refined_args)
     
@@ -195,4 +205,3 @@ if __name__ == "__main__":
             'postprocess_iterations': args.postprocess_iterations,
         })
         refined_mesh_path = extract_mesh_and_texture_from_refined_sugar(refined_mesh_args)
-        

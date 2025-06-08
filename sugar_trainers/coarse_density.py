@@ -294,6 +294,8 @@ def coarse_training_with_density_regularization(args):
         eval_split=use_eval_split,
         eval_split_interval=n_skip_images_for_eval_split,
         white_background=use_white_background,
+        img_size_limit=getattr(args, 'img_size_limit', None),
+        img_resolution=getattr(args, 'img_resolution', None),
         )
 
     CONSOLE.print(f'{len(nerfmodel.training_cameras)} training images detected.')

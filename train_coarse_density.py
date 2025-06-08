@@ -26,9 +26,14 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--normal_factor', type=float, default=0.2, help='factor to multiply the normal loss by.')
     
     parser.add_argument('--gpu', type=int, default=0, help='Index of GPU device to use.')
+    
+    # Memory optimization parameters
+    parser.add_argument('--img_size_limit', type=int, default=1920, 
+                        help='Maximum image size to use for training. Images larger than this will be downscaled.')
+    parser.add_argument('--img_resolution', type=int, default=1, 
+                        help='Resolution factor for image downscaling. Higher values mean lower resolution.')
 
     args = parser.parse_args()
     
     # Call function
     coarse_training_with_density_regularization(args)
-    

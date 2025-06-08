@@ -42,9 +42,14 @@ if __name__ == "__main__":
     
     parser.add_argument('--export_ply', type=str2bool, default=True, 
                         help='If True, export a ply files with the refined 3D Gaussians at the end of the training.')
+    
+    # Memory optimization parameters
+    parser.add_argument('--img_size_limit', type=int, default=1920, 
+                        help='Maximum image size to use for training. Images larger than this will be downscaled.')
+    parser.add_argument('--img_resolution', type=int, default=1, 
+                        help='Resolution factor for image downscaling. Higher values mean lower resolution.')
 
     args = parser.parse_args()
     
     # Call function
     refined_training(args)
-    

@@ -83,6 +83,12 @@ if __name__ == "__main__":
     parser.add_argument('--gpu', type=int, default=0, help='Index of GPU device to use.')
     parser.add_argument('--white_background', type=str2bool, default=False, help='Use a white background instead of black.')
 
+    # Memory optimization parameters
+    parser.add_argument('--img_resolution', type=int, default=1,
+                        help='Factor by which to downscale images. 1=original, 2=half, 4=quarter, 8=eighth. Higher values save more memory.')
+    parser.add_argument('--img_size_limit', type=int, default=1920,
+                        help='Maximum image size. Images larger than this will be downscaled to save memory.')
+
     # Parse arguments
     args = parser.parse_args()
     if args.low_poly:
@@ -123,7 +129,9 @@ if __name__ == "__main__":
                 -s {args.scene_path} \
                 -m {gs_checkpoint_dir} \
                 {white_background_str}\
-                --iterations 7_000"
+                --iterations 7_000 \
+                --resolution {args.img_resolution} \
+                --img_size_limit {args.img_size_limit}"
         )
     else:
         print("A vanilla 3DGS checkpoint was provided. Skipping the vanilla 3DGS optimization.")
@@ -157,5 +165,7 @@ if __name__ == "__main__":
             --refinement_time {args.refinement_time} \
             --eval {args.eval} \
             --gpu {args.gpu} \
-            --white_background {args.white_background}"
+            --white_background {args.white_background} \
+            --img_resolution {args.img_resolution} \
+            --img_size_limit {args.img_size_limit}"
     )
