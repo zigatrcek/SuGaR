@@ -346,6 +346,13 @@ def coarse_training_with_density_regularization_and_dn_consistency(args):
     CONSOLE.print("Source path:", source_path)
     CONSOLE.print("   > Content:", len(os.listdir(source_path)))
     CONSOLE.print("Gaussian Splatting checkpoint path:", gs_checkpoint_path)
+    
+    # Check if the checkpoint directory exists
+    if not os.path.exists(gs_checkpoint_path):
+        CONSOLE.print(f"ERROR: Gaussian Splatting checkpoint directory does not exist: {gs_checkpoint_path}")
+        CONSOLE.print("Please ensure that the vanilla 3DGS training completed successfully.")
+        raise FileNotFoundError(f"Gaussian Splatting checkpoint directory not found: {gs_checkpoint_path}")
+    
     CONSOLE.print("   > Content:", len(os.listdir(gs_checkpoint_path)))
     CONSOLE.print("SUGAR checkpoint path:", sugar_checkpoint_path)
     CONSOLE.print("Iteration to load:", iteration_to_load)
