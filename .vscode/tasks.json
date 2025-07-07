@@ -1,0 +1,126 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "SuGaR: Train Full Pipeline",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "train_full_pipeline.py",
+                "-s",
+                "${input:scenePath}",
+                "-r",
+                "${input:regularizationType}",
+                "--high_poly",
+                "True",
+                "--export_obj",
+                "True"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "SuGaR: Extract Mesh",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "extract_mesh.py",
+                "-s",
+                "${input:scenePath}",
+                "-c",
+                "${input:checkpointPath}",
+                "-r",
+                "${input:regularizationType}"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "SuGaR: Run Viewer",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "run_viewer.py",
+                "-p",
+                "${input:plyPath}"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "SuGaR: Compute Metrics",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "metrics.py",
+                "--scene_config",
+                "${input:sceneConfigPath}",
+                "-r",
+                "${input:regularizationType}"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            },
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "scenePath",
+            "description": "Path to COLMAP dataset",
+            "default": "./data/",
+            "type": "promptString"
+        },
+        {
+            "id": "regularizationType",
+            "description": "Regularization type",
+            "default": "dn_consistency",
+            "type": "pickString",
+            "options": [
+                "dn_consistency",
+                "density",
+                "sdf"
+            ]
+        },
+        {
+            "id": "checkpointPath",
+            "description": "Path to checkpoint directory",
+            "default": "./output/",
+            "type": "promptString"
+        },
+        {
+            "id": "plyPath",
+            "description": "Path to .ply file",
+            "default": "./output/refined_ply/",
+            "type": "promptString"
+        },
+        {
+            "id": "sceneConfigPath",
+            "description": "Path to scene config JSON",
+            "default": "./configs/metrics/scenes.json",
+            "type": "promptString"
+        }
+    ]
+}
