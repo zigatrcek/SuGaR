@@ -49,7 +49,7 @@ if __name__ == "__main__":
     # Refined model parameters
     parser.add_argument('-g', '--gaussians_per_triangle', type=int, default=1, 
                         help='Number of gaussians per triangle used in the refined SuGaR models to evaluate. Default is 1')
-    parser.add_argument('-f', '--refinement_iterations', type=int, default=15_000, 
+    parser.add_argument('-f', '--refinement_iterations', type=int, default=2_000, 
                         help='Number of refinement iterations used in the refined SuGaR models to evaluate. Default is 15_000')
     
     # Device
@@ -76,6 +76,12 @@ if __name__ == "__main__":
     parser.add_argument('--use_marching_cubes', type=str2bool, default=False, 
                         help='If True, will evaluate Marching Cubes as the extraction method.')
     
+    # Memory optimization parameters
+    parser.add_argument('--img_resolution', type=int, default=1,
+                        help='Factor by which to downscale images. 1=original, 2=half, 4=quarter, 8=eighth. Higher values save more memory.')
+    parser.add_argument('--img_size_limit', type=int, default=1920,
+                        help='Maximum image size. Images larger than this will be downscaled to save memory.')
+    
     args = parser.parse_args()
     # Mesh resolution
     if args.low_poly:
@@ -96,6 +102,10 @@ if __name__ == "__main__":
     if args.refinement_time == 'long':
         args.refinement_iterations = 15_000
         print('Evaluating long refinement time.')
+    
+    if args.regularization_type == 'dn_consistency':
+        args.regularization_type = 'density'
+        print('Evaluating with density regularization as a substitute for dn_consistency.')
             
     # --- Scenes dict ---
     with open(args.scene_config, 'r') as f:
@@ -166,10 +176,12 @@ if __name__ == "__main__":
         nerfmodel_30k = GaussianSplattingWrapper(
             source_path=source_path,
             output_path=gs_checkpoint_path,
-            iteration_to_load=30_000,
+            iteration_to_load=7_000,
             load_gt_images=True,
             eval_split=True,
             eval_split_interval=n_skip_images_for_eval_split,
+            img_resolution=args.img_resolution,
+            img_size_limit=args.img_size_limit,
             )
 
         nerfmodel_7k = GaussianSplattingWrapper(
@@ -179,6 +191,8 @@ if __name__ == "__main__":
             load_gt_images=False,
             eval_split=True,
             eval_split_interval=n_skip_images_for_eval_split,
+            img_resolution=args.img_resolution,
+            img_size_limit=args.img_size_limit,
             )
         
         if use_diffuse_color_only:
@@ -201,28 +215,15 @@ if __name__ == "__main__":
             gs_7k_psnrs = []
             gs_7k_lpipss = []
             
-            gs_30k_ssims = []
-            gs_30k_psnrs = []
-            gs_30k_lpipss = []
-            
             with torch.no_grad():    
                 for cam_idx in cam_indices:
                     # GT image
                     gt_img = nerfmodel_30k.get_test_gt_image(cam_idx).permute(2, 0, 1).unsqueeze(0)
                     
-                    # Vanilla 3DGS image (30K)
-                    gs_30k_img = nerfmodel_30k.render_image(
-                        nerf_cameras=nerfmodel_30k.test_cameras,
-                        camera_indices=cam_idx).clamp(min=0, max=1).permute(2, 0, 1).unsqueeze(0)
-                    
                     # Vanilla 3DGS image (7K)
                     gs_7k_img = nerfmodel_7k.render_image(
                         nerf_cameras=nerfmodel_30k.test_cameras,
                         camera_indices=cam_idx).clamp(min=0, max=1).permute(2, 0, 1).unsqueeze(0)
-                    
-                    gs_30k_ssims.append(ssim(gs_30k_img, gt_img))
-                    gs_30k_psnrs.append(psnr(gs_30k_img, gt_img))
-                    gs_30k_lpipss.append(lpips(gs_30k_img, gt_img, net_type='vgg'))
                     
                     gs_7k_ssims.append(ssim(gs_7k_img, gt_img))
                     gs_7k_psnrs.append(psnr(gs_7k_img, gt_img))
@@ -234,20 +235,10 @@ if __name__ == "__main__":
             scene_results['3dgs_7k']['psnr'] = torch.tensor(gs_7k_psnrs).mean().item()
             scene_results['3dgs_7k']['lpips'] = torch.tensor(gs_7k_lpipss).mean().item()
             
-            scene_results['3dgs_30k'] = {}
-            scene_results['3dgs_30k']['ssim'] = torch.tensor(gs_30k_ssims).mean().item()
-            scene_results['3dgs_30k']['psnr'] = torch.tensor(gs_30k_psnrs).mean().item()
-            scene_results['3dgs_30k']['lpips'] = torch.tensor(gs_30k_lpipss).mean().item()
-            
             CONSOLE.print(f"\nVanilla 3DGS results (7K iterations):")
             CONSOLE.print("SSIM:", torch.tensor(gs_7k_ssims).mean())
             CONSOLE.print("PSNR:", torch.tensor(gs_7k_psnrs).mean())
             CONSOLE.print("LPIPS:", torch.tensor(gs_7k_lpipss).mean())
-            
-            CONSOLE.print(f"\bVanilla 3DGS results (30K iterations):")
-            CONSOLE.print("SSIM:", torch.tensor(gs_30k_ssims).mean())
-            CONSOLE.print("PSNR:", torch.tensor(gs_30k_psnrs).mean())
-            CONSOLE.print("LPIPS:", torch.tensor(gs_30k_lpipss).mean())
         
         # Evaluating SuGaR models
         with torch.no_grad():
@@ -301,12 +292,19 @@ if __name__ == "__main__":
                             
                         else:
                             CONSOLE.print("Using surface Gaussian Splatting for rendering.")
-                            sugar_checkpoint_path = f'sugarcoarse_3Dgs{coarse_iteration_to_load}_{estim_method}estimXX_sdfnormYY/'
-                            sugar_checkpoint_path = sugar_checkpoint_path.replace(
-                                'XX', str(coarse_estimation_factor).replace('.', '')
-                                ).replace(
-                                    'YY', str(coarse_normal_factor).replace('.', '')
-                                    )
+                            
+                            if estim_method == 'dn_consistency':
+                                sugar_checkpoint_path = f'sugarcoarse_3Dgs{coarse_iteration_to_load}_densityestimXX/'
+                                sugar_checkpoint_path = sugar_checkpoint_path.replace(
+                                    'XX', str(coarse_estimation_factor).replace('.', '')
+                                )
+                            else:
+                                sugar_checkpoint_path = f'sugarcoarse_3Dgs{coarse_iteration_to_load}_{estim_method}estimXX_sdfnormYY/'
+                                sugar_checkpoint_path = sugar_checkpoint_path.replace(
+                                    'XX', str(coarse_estimation_factor).replace('.', '')
+                                    ).replace(
+                                        'YY', str(coarse_normal_factor).replace('.', '')
+                                        )
                             
                             # Loading mesh
                             CONSOLE.print(f"\nProcessing Surface level: {surface_level}, Decimation target: {decimation_target}, Refinement iterations: {refinement_iterations}...")
@@ -331,7 +329,12 @@ if __name__ == "__main__":
                             
                             # Loading refined SuGaR model
                             mesh_name = sugar_mesh_path.split("/")[-1].split(".")[0]
-                            refined_sugar_path = 'sugarfine_' + mesh_name.replace('sugarmesh_', '') + '_normalconsistencyXX_gaussperfaceYY/'
+                            
+                            if estim_method == 'dn_consistency':
+                                refined_sugar_path = 'sugarfine_' + mesh_name.replace('sugarmesh_', '') + '_gaussperfaceYY/'
+                            else:
+                                refined_sugar_path = 'sugarfine_' + mesh_name.replace('sugarmesh_', '') + '_normalconsistencyXX_gaussperfaceYY/'
+
                             refined_sugar_path = os.path.join(os.path.join('./output/refined/', scene_name), refined_sugar_path)
                             refined_sugar_path = refined_sugar_path.replace(
                                 'XX', str(surface_mesh_normal_consistency_factor).replace('.', '')
