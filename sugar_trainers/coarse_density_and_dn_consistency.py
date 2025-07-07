@@ -346,6 +346,13 @@ def coarse_training_with_density_regularization_and_dn_consistency(args):
     CONSOLE.print("Source path:", source_path)
     CONSOLE.print("   > Content:", len(os.listdir(source_path)))
     CONSOLE.print("Gaussian Splatting checkpoint path:", gs_checkpoint_path)
+    
+    # Check if the checkpoint directory exists
+    if not os.path.exists(gs_checkpoint_path):
+        CONSOLE.print(f"ERROR: Gaussian Splatting checkpoint directory does not exist: {gs_checkpoint_path}")
+        CONSOLE.print("Please ensure that the vanilla 3DGS training completed successfully.")
+        raise FileNotFoundError(f"Gaussian Splatting checkpoint directory not found: {gs_checkpoint_path}")
+    
     CONSOLE.print("   > Content:", len(os.listdir(gs_checkpoint_path)))
     CONSOLE.print("SUGAR checkpoint path:", sugar_checkpoint_path)
     CONSOLE.print("Iteration to load:", iteration_to_load)
@@ -382,6 +389,8 @@ def coarse_training_with_density_regularization_and_dn_consistency(args):
         eval_split=use_eval_split,
         eval_split_interval=n_skip_images_for_eval_split,
         white_background=use_white_background,
+        img_size_limit=getattr(args, 'img_size_limit', None),
+        img_resolution=getattr(args, 'img_resolution', None),
         )
 
     CONSOLE.print(f'{len(nerfmodel.training_cameras)} training images detected.')

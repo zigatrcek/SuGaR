@@ -215,7 +215,7 @@ def run_colmap_conversion(dataset_path: Path, skip_matching: bool = False, no_gp
     
     print(f"✅ Conversion script found")
     
-    cmd = ["python3", str(convert_script), "-s", str(dataset_path)]
+    cmd = ["python", str(convert_script), "-s", str(dataset_path)]
     
     if skip_matching:
         cmd.append("--skip_matching")

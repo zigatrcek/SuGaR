@@ -2,6 +2,7 @@
 *.pth
 output*
 *.slurm
+data/
 *.pyc
 *.ply
 *.obj

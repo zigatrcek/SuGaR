@@ -262,6 +262,8 @@ Moreover, you can add `--refinement_time "short"`, `"medium"` or `"long"` to set
 
 Finally, you can choose to export a traditional textured mesh with the `--export_obj` argument. This step is optional but is enabled by default in the `train_full_pipeline.py` script, as the mesh is required for using the <a href="https://github.com/Anttwo/sugar_frosting_blender_addon/">Blender add-on</a> and editing, combining or animating scenes in Blender.
 
+**GPU Memory Optimization:** If you encounter out-of-memory errors with large images, you can use the memory optimization parameters `--img_resolution` and `--img_size_limit`. For example, use `--img_resolution 4` to downscale images to quarter resolution, or `--img_size_limit 1024` to limit maximum image size to 1024 pixels.
+
 Results are saved in the `output/` directory.
 
 <details>
@@ -280,6 +282,8 @@ Results are saved in the `output/` directory.
 | `--export_obj` / `-t` | `bool` | If True, will optimize and export a traditional textured mesh as an `.obj` file from the refined SuGaR model, after refinement. Computing a traditional color UV texture should just take a few seconds with Nvdiffrast. Default is `True`. |
 | `--square_size` | `int` | Size of the square allocated to each pair of triangles in the UV texture. Increase for higher texture resolution. Please decrease if you encounter memory issues. Default is `8`. |
 |`--white_background` | `bool` | If True, the background of the images will be set to white. Default is `False`. |
+| `--img_resolution` | `int` | Factor by which to downscale images for memory optimization. `1`=original resolution, `2`=half resolution, `4`=quarter resolution, `8`=eighth resolution. Higher values save more GPU memory but reduce quality. Default is `1`. |
+| `--img_size_limit` | `int` | Maximum image size in pixels. Images larger than this will be downscaled to save GPU memory. Useful for preventing out-of-memory errors with large images. Default is `1920`. |
 
 
 </details>

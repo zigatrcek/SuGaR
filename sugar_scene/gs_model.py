@@ -84,6 +84,8 @@ class GaussianSplattingWrapper:
                  background=[0., 0., 0.],
                  white_background=False,
                  remove_camera_indices=[],
+                 img_size_limit: int = None,
+                 img_resolution: int = None,
                  ) -> None:
         """Initialize the Gaussian Splatting model wrapper.
         
@@ -104,6 +106,10 @@ class GaussianSplattingWrapper:
             white_background (bool, optional): If True, uses a white background instead of black. Defaults to False.
             remove_camera_indices (list, optional): List of indices of cameras to remove from the set of cameras. 
                 Defaults to [].
+            img_size_limit (int, optional): Maximum image size to use for training. Images larger than this will be downscaled. 
+                If None, uses model_params.img_size_limit. Defaults to None.
+            img_resolution (int, optional): Resolution factor for image downscaling. Higher values mean lower resolution. 
+                If None, uses model_params.img_resolution. Defaults to None.
         """
         self.source_path = source_path
         self.output_path = output_path
@@ -124,6 +130,12 @@ class GaussianSplattingWrapper:
         self.pipeline_params = pipeline_params
         self.opt_params = opt_params
         
+        # Use ModelParams values as defaults if parameters not provided directly
+        if img_size_limit is None:
+            img_size_limit = getattr(self.model_params, 'img_size_limit', None)
+        if img_resolution is None:
+            img_resolution = getattr(self.model_params, 'img_resolution', None)
+        
         if white_background:
             background = [1., 1., 1.]
         
@@ -135,6 +147,8 @@ class GaussianSplattingWrapper:
             load_gt_images=load_gt_images,
             white_background=white_background,
             remove_indices=remove_camera_indices,
+            max_img_size=img_size_limit,
+            image_resolution=img_resolution,
             )
         
         if eval_split:
