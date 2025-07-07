@@ -75,23 +75,23 @@ RUN conda init bash
 # Create the conda environment first
 RUN conda env create -f environment.yml
 
-# # Build and install the CUDA extensions with proper conda environment
-# SHELL ["/bin/bash", "-c"]
-# RUN source /opt/conda/etc/profile.d/conda.sh && \
-#     conda activate sugar && \
-#     cd /app/gaussian_splatting/submodules/diff-gaussian-rasterization && \
-#     pip install -e . && \
-#     cd ../simple-knn && \
-#     pip install -e .
+# Build and install the CUDA extensions with proper conda environment
+SHELL ["/bin/bash", "-c"]
+RUN source /opt/conda/etc/profile.d/conda.sh && \
+    conda activate sugar && \
+    cd /app/gaussian_splatting/submodules/diff-gaussian-rasterization && \
+    pip install -e . && \
+    cd ../simple-knn && \
+    pip install -e .
 
-# # Install nvdiffrast
-# RUN source /opt/conda/etc/profile.d/conda.sh && \
-#     conda activate sugar && \
-#     pip install nvdiffrast
+# Install nvdiffrast
+RUN source /opt/conda/etc/profile.d/conda.sh && \
+    conda activate sugar && \
+    pip install nvdiffrast
 
-# # Create symbolic links for the modules if needed
-# RUN ln -sf /app/gaussian_splatting/submodules/diff-gaussian-rasterization/diff_gaussian_rasterization /app/gaussian_splatting/ && \
-#     ln -sf /app/gaussian_splatting/submodules/simple-knn/simple_knn /app/gaussian_splatting/
+# Create symbolic links for the modules if needed
+RUN ln -sf /app/gaussian_splatting/submodules/diff-gaussian-rasterization/diff_gaussian_rasterization /app/gaussian_splatting/ && \
+    ln -sf /app/gaussian_splatting/submodules/simple-knn/simple_knn /app/gaussian_splatting/
 
 # Create an improved helper script for running with xvfb
 RUN printf '#!/bin/bash\n\
