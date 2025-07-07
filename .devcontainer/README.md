@@ -18,29 +18,24 @@ This directory contains the VS Code Dev Container configuration for the SuGaR pr
 
 - **Pre-configured Python environment** with the `sugar` conda environment
 - **GPU support** enabled with `--gpus=all`
-- **Port forwarding** for the SuGaR viewer (port 3000)
+- **Port forwarding** for the SuGaR viewer (port 5173)
 - **Volume mounts** for `data/` and `output/` directories
 - **VS Code extensions** for Python, Jupyter, C++, and more
+- **X11 forwarding** - allows mesh rendering in the container
 
 ## Usage
 
 Once the container is running:
 
 1. The terminal will automatically activate the `sugar` conda environment
-2. You can run SuGaR commands directly:
+2. Run SuGaR commands through `run_with_xvfb.sh` to enable X11 forwarding, e.g.:
    ```bash
-   python train_full_pipeline.py -s ./data/your_scene -r dn_consistency --high_poly True --export_obj True
+   ./run_with_xvfb.sh python train_full_pipeline.py -s ./data/your_scene -r dn_consistency --high_poly True --export_obj True
    ```
-3. Access the viewer at `http://localhost:3000` when running viewer commands
+3. Access the viewer at `http://localhost:5173` when running viewer commands
 4. Your data and output directories are mounted from the host system
 
 ## Directory Structure
 
 - `data/` - Mount point for your input datasets (create this directory on your host)
 - `output/` - Mount point for generated outputs (create this directory on your host)
-
-## Troubleshooting
-
-- **GPU not detected**: Ensure NVIDIA Container Toolkit is installed and Docker has GPU access
-- **Build fails**: Check that all submodules are properly initialized with `git submodule update --init --recursive`
-- **Port conflicts**: Change the port mapping in `devcontainer.json` if port 3000 is already in use
